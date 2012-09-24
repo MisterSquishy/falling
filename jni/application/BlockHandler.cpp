@@ -12,7 +12,7 @@ BlockHandler::BlockHandler(void) :
 
 	GRID_WIDTH = 7;
 
-	d = new Dude(Point2f(512.0f, GRID_HEIGHT-32.0f), Vector2f(32.0f, 32.0f), Global::pi*2.0f);
+	d = new Dude(Point2f(512.0f, GRID_HEIGHT-32.0f), Vector2f(64.0f, 64.0f), Global::pi*2.0f);
 
 	for(int i = 0; i < GRID_WIDTH; i++)
 	{
@@ -67,7 +67,7 @@ void BlockHandler::perform_logic(float time_passed, float time_step, ControlStat
 				potentialCollissions.push_back(blocks[i-1][j]);
 			if(i+1 >= 0 && i+1 < blocks.size() && j >=0 && j < blocks[i+1].size()) // Right
 				potentialCollissions.push_back(blocks[i+1][j]);
-			potentialCollissions.push_back(d);
+			//potentialCollissions.push_back(d);
 			block->colliding(potentialCollissions, true);
 			block->perform_logic(time_passed, time_step);
 		}
