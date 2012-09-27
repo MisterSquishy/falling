@@ -1,7 +1,7 @@
 #include "GameObject.h"
 
-GameObject::GameObject(const Point2f &position_, const Vector2f &size_, const float &theta_, const float &speed_)
-  : m_position(position_), m_size(size_), m_theta(theta_), m_speed(speed_)
+GameObject::GameObject(const Point2f &position_, const Vector2f &size_, const float &theta_, const float &speed_, const float &accel_)
+: m_position(position_), m_size(size_), m_theta(theta_), m_speed(speed_), m_accel(accel_)
 {
 	for(int i = 0; i < NUM_COLLISSION_SIDES; i++)
 	{
@@ -11,6 +11,29 @@ GameObject::GameObject(const Point2f &position_, const Vector2f &size_, const fl
  
 GameObject::~GameObject()
 {
+}
+
+void GameObject::moveDown(float time_step)
+{
+    if(collisions[BOTTOM])
+    {
+        m_speed = 0.0f;
+        if(atBottom()) m_position.y = get_Window().get_height() - m_size.y;
+        else
+        {
+            for(int i = 0; i < wasBelow.size(); i++)
+            {
+                GameObject* obj = wasBelow[i];
+                if(obj != NULL && bottom() > obj->top())
+                    m_position.y = obj->top() - m_size.y + 1;
+            }
+        }
+    }
+    else
+    {
+        m_speed += m_accel;
+        m_position.y += (time_step * m_speed * 35.0f);
+    }
 }
 
 void GameObject::render(const String &texture, const Color &filter) const {
@@ -35,9 +58,18 @@ void GameObject::colliding(vector<T*>& candidates, bool resetKnowledge)
 
 bool GameObject::atBottom()
 {
-	return m_position.y + m_size.y >= get_Window().get_height();
+	return bottom() >= get_Window().get_height();
 }
 
+bool GameObject::atRight()
+{
+	return right() >= get_Window().get_width();
+}
+
+bool GameObject::atLeft()
+{
+	return left() <= 0;
+}
 
 int GameObject::top()
 {

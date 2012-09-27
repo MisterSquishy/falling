@@ -14,7 +14,7 @@ struct ControlState
 	bool right;
 	bool jump;
 	bool destroy;
-
+    
 	ControlState()
 	{
 		left = false;
@@ -27,61 +27,86 @@ struct ControlState
 class GameObject
 {
 public:
-
-	GameObject(const Point2f &position_, const Vector2f &size_, const float &theta_ = 0.0f, const float &speed_ = 0.0f);
+	GameObject(const Point2f &position_, const Vector2f &size_, const float &theta_ = 0.0f, const float &speed_ = 0.0f, const float &accel_ = 0.0f);
 	virtual ~GameObject(void);
-
+    
 	virtual void render() const = 0; // pure virtual function call
-
-	bool atBottom();
-	int top();
-	int bottom();
-	int left();
-	int right();
-	int height();
-	int width();
-
+    
+	virtual bool atBottom();
+    virtual bool atRight();
+    virtual bool atLeft();
+	virtual int top();
+	virtual int bottom();
+    virtual int left();
+	virtual int right();
+	virtual int height();
+	virtual int width();
+    
 protected:
 	template <class T>
 	void colliding(vector<T*>& candidates, bool resetKnowledge)
 	{
-		if(resetKnowledge) for(int i = 0; i < NUM_COLLISSION_SIDES; i++) collisions[i] = false;
-
+		if(resetKnowledge)
+        {
+            wasBelow.clear();
+            for(int i = 0; i < NUM_COLLISSION_SIDES; i++) collisions[i] = false;
+        }
+        
+        if(atBottom()) collisions[BOTTOM] |= true;
+        if(atRight()) collisions[RIGHT] |= true;
+        if(atLeft()) collisions[LEFT] = true;
+        
 		for(unsigned int i = 0; i < candidates.size(); i++)
 		{
 			GameObject* g = candidates[i];
 			if(g == NULL) continue;
-				
+            
 			bool withG[NUM_COLLISSION_SIDES] = {false};
-		
-			// Top
-			if(0 < g->bottom() - top() && g->bottom() - top() <= g->m_size.y)
-				withG[TOP] |= true;
-			// Bottom
-			if(0 < bottom() - g->top() && bottom() - g->top() <= g->m_size.y)
-				withG[BOTTOM] |= true;
-			// Left
-			if(0 < g->right() - left() && g->right() - left() <= g->m_size.x)
-				withG[LEFT] |= true;
-			// Right
-			if(0 < right() - g->left() && right() - g->left() <= g->m_size.x)
-				withG[RIGHT] |= true;
-				
+            collidingWith(g, withG);
+            
 			collisions[TOP]    |= withG[TOP]    && (withG[LEFT] || withG[RIGHT] );
 			collisions[BOTTOM] |= withG[BOTTOM] && (withG[LEFT] || withG[RIGHT] );
 			collisions[LEFT]   |= withG[LEFT]   && (withG[TOP]  || withG[BOTTOM]);
 			collisions[RIGHT]  |= withG[RIGHT]  && (withG[TOP]  || withG[BOTTOM]);
-			if(atBottom()) collisions[BOTTOM] = true;
 		}
 	}
-
+    
+    template <class T>
+    void collidingWith(T* g, bool* collisions)
+	{
+        if(g != NULL)
+        {
+            if(right() != g->left() && left() != g->right())
+            {
+                // Top
+                if(0 < g->bottom() - top() && g->bottom() - top() <= g->m_size.y)
+                    collisions[TOP] |= true;
+                // Bottom
+                if(0 < bottom() - g->top() && bottom() - g->top() <= g->m_size.y)
+                {
+                    wasBelow.push_back(g);
+                    collisions[BOTTOM] |= true;
+                }
+            }
+            // Left
+            if(0 < g->right() - left() && g->right() - left() <= g->m_size.x)
+                collisions[LEFT] |= true;
+            // Right
+            if(0 < right() - g->left() && right() - g->left() <= g->m_size.x)
+                collisions[RIGHT] |= true;
+        }
+	}
+    
+    void moveDown(float time_step);
+    
 	void render(const String &texture, const Color &filter = Color()) const;
 	Point2f m_position; // Upper left corner
 	Vector2f m_size; // (width, height)
 	bool collisions[NUM_COLLISSION_SIDES];
 	float m_speed;
 	float m_theta;
-
+    float m_accel;
+    vector<GameObject*> wasBelow;
 private:
 	friend class BlockHandler;
 };

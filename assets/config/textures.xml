@@ -9,7 +9,7 @@ For each Texture entry in Textures:
   3. 'filepath' should be the path from within 'zenilib/'
   4. 'tile' should be 0 for best quality if tiling is unnecessary
      'tile' should be 1 to enable tiling (for *ALL* textures for .3ds 'Model's)
-       
+
      If 'tile' is 1 and tiling is not desired, floating point
      error can make things look worse at the edges of tiles.
 
@@ -20,7 +20,7 @@ For each Sprite entry in Textures:
   3. 'token's should be the tokens of existing Textures
      'file's should be standard Texture entries (see above)
        the 'token' for the frame will be 'sprite_token/frame_number'
-     
+
      All 'token's must have been defined earlier in the file.
      'token's defined later in the file will be ignored.
 
@@ -71,4 +71,14 @@ The following things are unsupported:
     <filepath>textures/dude.png</filepath>
     <tile>0</tile>
   </dude>
+
+  <dude_wall_r>
+    <filepath>textures/dude_wall_r.png</filepath>
+    <tile>0</tile>
+  </dude_wall_r>
+
+  <dude_wall_l>
+    <filepath>textures/dude_wall_l.png</filepath>
+    <tile>0</tile>
+  </dude_wall_l>
 </Textures>

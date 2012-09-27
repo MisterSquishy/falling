@@ -6,7 +6,7 @@
 using namespace std;
 using namespace Zeni;
 
-enum DudeState {D_NORMAL, D_FALLING, D_JUMPING};
+enum DudeState {D_NORMAL, D_JUMPING};
 
 class Dude : public GameObject
 {
@@ -14,15 +14,26 @@ public:
 	Dude(const Point2f &position_, const Vector2f &size_, const float &theta_);
 	~Dude(void);
 
-	void perform_logic(float time_passed, float time_step, ControlState cs);
+	void perform_logic(float time, float time_passed, float time_step, ControlState cs);
 	void render() const;
+    
+    int left();
+	int right();
 
 protected:
+
 	template <class T>
 	void colliding(vector<T*>& candidates, bool resetKnowledge)
 	{
-		if(resetKnowledge) for(int i = 0; i < NUM_COLLISSION_SIDES; i++) collisions[i] = false;
-
+		if(resetKnowledge)
+        {
+            for(int i = 0; i < NUM_COLLISSION_SIDES; i++) collisions[i] = false;
+            wasBelow.clear();
+        }
+        if(atBottom()) collisions[BOTTOM] |= true;
+        if(atRight()) collisions[RIGHT] |= true;
+        if(atLeft()) collisions[LEFT] |= true;
+        
 		for(unsigned int i = 0; i < candidates.size(); i++)
 		{
 			GameObject* g = candidates[i];
@@ -35,7 +46,11 @@ protected:
 			// Top
 			withG[TOP] = top() <= g->bottom() && bottom() >= g->bottom() && tb_mid >= g->left() && tb_mid <= g->right();
 			// Bottom
-			withG[BOTTOM] = bottom() >= g->top() && top() <= g->top() && tb_mid >= g->left() && tb_mid <= g->right();
+            if(bottom() >= g->top() && top() <= g->top() && tb_mid >= g->left() && tb_mid <= g->right())
+            {
+                withG[BOTTOM] = true;
+                wasBelow.push_back(g);
+            }
 			// Left
 			withG[LEFT] = left() <= g->right() && right() >= g->right() && lr_mid <= g->bottom() && lr_mid >= g->top();
 			// Right
@@ -46,13 +61,14 @@ protected:
 			collisions[LEFT]   |= withG[LEFT];
 			collisions[RIGHT]  |= withG[RIGHT];
 		}
-		collisions[BOTTOM] |= atBottom();
 	}
 
 private:
 	DudeState state;
-	float accel;
 	friend class BlockHandler;
+    int wallJumpCount;
+    float lastWallJump;
+    int walledRight;
 };
 
 #endif

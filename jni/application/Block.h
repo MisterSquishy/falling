@@ -6,25 +6,20 @@
 using namespace std;
 using namespace Zeni;
 
-enum BlockState{NORMAL, WAITING_TO_START_FALLING, FALLING};
+enum BlockState{BL_NORMAL, BL_FALLING};
 
 class Block : public GameObject
 {
 public:
-	Block(const Point2f &position_, const Vector2f &size_, const float &theta);
+	Block(const Point2f &position_, const Vector2f &size_, const float &theta, const float speed);
 	~Block(void);
 
 	void perform_logic(float time_passed, float time_step);
 	void render() const;
 
-	//void setColliding(bool colliding);
-
 private:
 	BlockState state;
-	//bool collidingWithOther;
-	//bool waitingToMoveSoICanLookCool;
-	
-	float coolTimer;
+    float m_speed;
 };
 
 #endif

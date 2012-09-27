@@ -1,10 +1,11 @@
 #include "Block.h"
 
 
-Block::Block(const Point2f &position_, const Vector2f &size_, const float &theta_) : GameObject(position_, size_, theta_)
+Block::Block(const Point2f &position_, const Vector2f &size_, const float &theta_, const float speed) :
+GameObject(position_, size_, theta_, 0.0f /* speed */, 0.19875f /* accel */)
 {
-	state = WAITING_TO_START_FALLING;
-	coolTimer = 0.0f;
+	state = BL_FALLING;
+    m_speed = speed;
 }
 
 
@@ -16,24 +17,15 @@ void Block::perform_logic(float time_passed, float time_step)
 {
 	switch(state)
 	{
-	case NORMAL:
-		if(!collisions[BOTTOM])
-			state = WAITING_TO_START_FALLING;
-		break;
-	case WAITING_TO_START_FALLING:
-		coolTimer += time_step;
-		if(coolTimer >= 0.089f)
-		{
-			// We're done waiting!
-			state = FALLING;
-			coolTimer = 0.0f;
-		}
-		break;
-	case FALLING:
-		if(collisions[BOTTOM])
-			state = NORMAL;
-		else m_position.y += 1;
-		break;
+        case BL_NORMAL:
+            if(!collisions[BOTTOM]) state = BL_FALLING;
+            break;
+        case BL_FALLING:
+            moveDown(time_step);
+
+            if(collisions[BOTTOM])
+                state = BL_NORMAL;
+            break;
 	}
 }
 

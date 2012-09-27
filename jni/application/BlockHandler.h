@@ -5,7 +5,8 @@
 #include "Dude.h"
 #include <zenilib.h>
 #include <vector>
-#include <deque>
+
+enum BlockHandlerState {BH_NORMAL, BH_STARTUP, BH_SPLASHDOWN, BH_CLEANUP};
 
 class BlockHandler
 {
@@ -21,9 +22,15 @@ public:
 	int GRID_WIDTH;
 
 private:
+    BlockHandlerState state;
 	Chronometer<Time> m_chrono;
 	vector<vector<Block*> > blocks;
 	Dude* d;
+	float timeToWait;
+    float lastBlockSpawn;
+    
+    unsigned int cleanupIndex;
+    float lastCleanup;
 };
 
 #endif
