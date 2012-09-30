@@ -164,7 +164,7 @@ private:
 
 		
 		Zeni::Font &fd = get_Fonts()["clock"];
-		fd.render_text("DESTROY BLOCKS AND SURVIVE!\n\n\nControls\n------------\na = move left\nd = move right\nw = jump\nspace = destroy blocks", Point2f(10, 10), get_Colors()["title_text"], ZENI_LEFT);
+		fd.render_text("DESTROY BLOCKS AND SURVIVE!\n\n\nControls\n------------\na = move left\nd = move right\nw = jump\nspace = destroy blocks\n\n\n\nSong from user johnfn on newgrounds.com", Point2f(10, 10), get_Colors()["title_text"], ZENI_LEFT);
     }
 };
 
@@ -179,6 +179,10 @@ class Bootstrap {
             get_Fonts();
             get_Sounds();
             get_Game().joy_mouse.enabled = true;
+            
+            get_Sound().set_BGM("sfx/bkgr");
+            get_Sound().set_BGM_looping(true);
+            get_Sound().play_BGM();
             
             return new Title_State<Play_State, Instructions_State>("Zenipex Library\nApplication");
         }

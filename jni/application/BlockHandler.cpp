@@ -213,7 +213,7 @@ void BlockHandler::render()
 		free(scoreText);
 
 
-		fr.render_text("HIGH SCORES", Point2f(get_Window().get_width(), 10.0f), get_Colors()["black"], ZENI_RIGHT);
+		fr.render_text("HIGH SCORES", Point2f(get_Window().get_width()-10.0f, 10.0f), get_Colors()["black"], ZENI_RIGHT);
 		char * name;
 		for(unsigned int i = 0; i < scoresThatIRead.size(); i++)
 		{
