@@ -67,10 +67,30 @@ The following things are unsupported:
     <tile>0</tile>
   </dirt_block>
 
-  <dude>
-    <filepath>textures/dude.png</filepath>
+  <titanium_block>
+    <filepath>textures/titanium_block.png</filepath>
     <tile>0</tile>
-  </dude>
+  </titanium_block>
+
+  <dude_r>
+    <filepath>textures/dude_r.png</filepath>
+    <tile>0</tile>
+  </dude_r>
+
+    <dude_l>
+        <filepath>textures/dude_l.png</filepath>
+        <tile>0</tile>
+    </dude_l>
+
+    <dude_air_r>
+        <filepath>textures/dude_air_r.png</filepath>
+        <tile>0</tile>
+    </dude_air_r>
+
+    <dude_air_l>
+        <filepath>textures/dude_air_l.png</filepath>
+        <tile>0</tile>
+    </dude_air_l>
 
   <dude_wall_r>
     <filepath>textures/dude_wall_r.png</filepath>
@@ -81,4 +101,9 @@ The following things are unsupported:
     <filepath>textures/dude_wall_l.png</filepath>
     <tile>0</tile>
   </dude_wall_l>
+
+  <dude_life_indicator>
+    <filepath>textures/dude_life_indicator.png</filepath>
+    <tile>0</tile>
+  </dude_life_indicator>
 </Textures>

@@ -1,12 +1,14 @@
 #include "GameObject.h"
 
-GameObject::GameObject(const Point2f &position_, const Vector2f &size_, const float &theta_, const float &speed_, const float &accel_)
-: m_position(position_), m_size(size_), m_theta(theta_), m_speed(speed_), m_accel(accel_)
+GameObject::GameObject(const Point2f &position_, const Vector2f &size_, const float &theta_, const float &y_speed_, const float &x_speed_, const float &y_accel_, const float &x_accel_)
+: m_position(position_), m_size(size_), m_theta(theta_), m_speed_y(y_speed_), m_speed_x(x_speed_), m_accel_y(y_accel_), m_accel_x(x_accel_)
 {
 	for(int i = 0; i < NUM_COLLISSION_SIDES; i++)
 	{
 		collisions[i] = false;
 	}
+
+	endOfWorldOnRight = get_Window().get_width();
 }
  
 GameObject::~GameObject()
@@ -17,11 +19,11 @@ void GameObject::moveDown(float time_step)
 {
     if(collisions[BOTTOM])
     {
-        m_speed = 0.0f;
+        m_speed_y = DORMANT;
         if(atBottom()) m_position.y = get_Window().get_height() - m_size.y;
         else
         {
-            for(int i = 0; i < wasBelow.size(); i++)
+            for(unsigned int i = 0; i < wasBelow.size(); i++)
             {
                 GameObject* obj = wasBelow[i];
                 if(obj != NULL && bottom() > obj->top())
@@ -31,9 +33,53 @@ void GameObject::moveDown(float time_step)
     }
     else
     {
-        m_speed += m_accel;
-        m_position.y += (time_step * m_speed * 35.0f);
+        m_speed_y += m_accel_y;
+        m_position.y += (time_step * m_speed_y * SCALE);
     }
+}
+
+void GameObject::moveSide(float time_step, int dir)
+{
+	m_accel_x = collisions[BOTTOM] ? COF : IN_AIR_COF;
+
+	switch(dir)
+	{
+	case 0: // No desired motion
+		if(m_speed_x > DORMANT)
+		{
+			m_speed_x -= m_accel_x;
+			if(m_speed_x < DORMANT) m_speed_x = DORMANT;
+		}
+		else if(m_speed_x < DORMANT)
+		{
+			m_speed_x += m_accel_x;
+			if(m_speed_x > DORMANT) m_speed_x = DORMANT;
+		}
+		break;
+	case 1:
+	case -1:
+		m_accel_x += MOVE_ACC_INC;
+
+		m_speed_x *= dir;
+
+		CollissionSide side = dir == 1 ? RIGHT : LEFT;
+
+		if(collisions[side] && m_speed_x > DORMANT)
+			m_speed_x = DORMANT;
+		else
+			m_speed_x = dir * min(m_speed_x+m_accel_x, MAX_X_SPEED);
+
+		break;
+	}
+	
+	if((m_speed_x < DORMANT && !collisions[LEFT]) || (m_speed_x > DORMANT && !collisions[RIGHT]))
+	{
+		m_position.x += m_speed_x * time_step * SCALE;
+	}
+	else if((m_speed_x < DORMANT && collisions[LEFT]) || (m_speed_x > DORMANT && collisions[RIGHT]))
+	{
+		m_speed_x = DORMANT;
+	}
 }
 
 void GameObject::render(const String &texture, const Color &filter) const {
@@ -63,7 +109,7 @@ bool GameObject::atBottom()
 
 bool GameObject::atRight()
 {
-	return right() >= get_Window().get_width();
+	return right() >= endOfWorldOnRight || right() >= get_Window().get_width();
 }
 
 bool GameObject::atLeft()

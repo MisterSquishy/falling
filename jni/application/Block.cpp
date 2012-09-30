@@ -1,11 +1,13 @@
 #include "Block.h"
 
 
-Block::Block(const Point2f &position_, const Vector2f &size_, const float &theta_, const float speed) :
-GameObject(position_, size_, theta_, 0.0f /* speed */, 0.19875f /* accel */)
+Block::Block(BlockType bt, const Point2f &position_, const Vector2f &size_, const float &theta_, const float &speed_y_, const float &speed_x_) :
+GameObject(position_, size_, theta_, speed_y_ /* speed_y */, speed_x_ /*speed_x*/, Y_ACCELERATION /* accel_y */)//, UNDEFINED /* accel_x*/ )
 {
-	state = BL_FALLING;
-    m_speed = speed;
+    destroyed = false;
+	type = bt;
+	state = BL_STARTUP;
+	broughtToLife = UNDEFINED;
 }
 
 
@@ -13,23 +15,52 @@ Block::~Block(void)
 {
 }
 
-void Block::perform_logic(float time_passed, float time_step)
+bool Block::isDestroyed()
+{
+    return destroyed;
+}
+
+void Block::destroy()
+{
+	if(type != TITANIUM) destroyed = true;
+}
+
+void Block::perform_logic(float current_time, float time_step)
 {
 	switch(state)
 	{
-        case BL_NORMAL:
-            if(!collisions[BOTTOM]) state = BL_FALLING;
-            break;
-        case BL_FALLING:
-            moveDown(time_step);
-
-            if(collisions[BOTTOM])
-                state = BL_NORMAL;
-            break;
+	case BL_STARTUP:
+		if(broughtToLife == UNDEFINED)
+			broughtToLife = current_time;
+		else if(current_time-broughtToLife >= BLOCK_PAUSE_BEFORE_FALL)
+			state = BL_NORMAL;
+		else if(current_time-broughtToLife >= BLOCK_PAUSE_BEFORE_FALL/2)
+		{
+			m_position.y += 1;
+		}
+		/*else if(current_time-broughtToLife >= BLOCK_PAUSE_BEFORE_FALL/4)
+		{
+			m_position.y += time_step * .02f;
+		}*/
+		break;
+	case BL_NORMAL:
+		bool playSound = m_speed_y != 0;
+		moveDown(time_step);
+		if(playSound && m_speed_y == 0)
+			play_sound("pop");
+		break;
 	}
 }
 
 void Block::render() const
 {
-    GameObject::render("dirt_block");
+	switch(type)
+	{
+	case DIRT:
+		GameObject::render("dirt_block");
+		break;
+	case TITANIUM:
+		GameObject::render("titanium_block");
+		break;
+	}
 }

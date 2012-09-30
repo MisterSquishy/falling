@@ -11,7 +11,7 @@ On Android, only .wav is supported.
 Otherwise, only .ogg is supported.
 To support both, two sets of audio files are necessary.
 
-Stereo sounds are unaffected by positional audio.  They must 
+Stereo sounds are unaffected by positional audio.  They must
 be downmixed to mono if you want them to work with OpenAL's
 positional audio functionality.
 
@@ -28,4 +28,16 @@ HOWTO:  To convert between types, or to downmix to mono,
   <hello_world>
     <filepath>sfx/104469__dkmedic__world</filepath>
   </hello_world>
+
+  <death>
+    <filepath>sfx/death</filepath>
+  </death>
+
+  <pop>
+    <filepath>sfx/pop</filepath>
+  </pop>
+
+  <crumble>
+    <filepath>sfx/crumble</filepath>
+  </crumble>
 </Sounds>

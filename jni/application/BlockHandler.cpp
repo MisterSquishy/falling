@@ -1,37 +1,27 @@
 #include "BlockHandler.h"
 
-BlockHandler::BlockHandler(void) :
-GRID_SIZE(64.0f),
-GRID_HEIGHT(get_Window().get_height() / (int) GRID_SIZE),
-GRID_WIDTH((get_Window().get_width() / (int) GRID_SIZE) + 1)
+BlockHandler::BlockHandler(void)
 {
-    m_chrono.start();
-    timeToWait = 5.0f;
-    lastCleanup = 0.0f;
+	GRID_HEIGHT = get_Window().get_height() / (int) GRID_SIZE;
+	GRID_WIDTH = (get_Window().get_width() / (int) GRID_SIZE) + 1;
+
+    timeToWait = INITIAL_TIME_BETWEEN_BLOCKS;
+    lastCleanup = UNDEFINED;
+
+	lastBlockSpawn = UNDEFINED;
+	startedRespawn = UNDEFINED;
+	min_index = 0;
+
+	rs.setCur(true);
     
     state = BH_NORMAL;
     
 	for(int i = 0; i < GRID_WIDTH; i++)
     {
 		blocks.push_back(vector<Block*>());
-        //if(i == 0) blocks[i].push_back(new Block(Point2f(64.0f * i, 64.0f), Vector2f(64.0f, 64.0f), Global::pi*2.0f));
     }
     
-    int blkidx = 3;
-    blocks[blkidx].push_back(new Block(Point2f(64.0f * blkidx, 64.0f), Vector2f(64.0f, 64.0f), Global::pi*2.0f, 10.0f));
-    blocks[blkidx].push_back(new Block(Point2f(64.0f * blkidx, 64.0f - (2*64.0f)), Vector2f(64.0f, 64.0f), Global::pi*2.0f, 10.0f));
-    blocks[blkidx].push_back(new Block(Point2f(64.0f * blkidx, 64.0f - (3*64.0f)), Vector2f(64.0f, 64.0f), Global::pi*2.0f, 10.0f));
-    blocks[blkidx].push_back(new Block(Point2f(64.0f * blkidx, 64.0f - (4*64.0f)), Vector2f(64.0f, 64.0f), Global::pi*2.0f, 10.0f));
-    blkidx = 1;
-    blocks[blkidx].push_back(new Block(Point2f(64.0f * blkidx, 64.0f), Vector2f(64.0f, 64.0f), Global::pi*2.0f, 10.0f));
-    blocks[blkidx].push_back(new Block(Point2f(64.0f * blkidx, 64.0f - (2*64.0f)), Vector2f(64.0f, 64.0f), Global::pi*2.0f, 10.0f));
-    blocks[blkidx].push_back(new Block(Point2f(64.0f * blkidx, 64.0f - (3*64.0f)), Vector2f(64.0f, 64.0f), Global::pi*2.0f, 10.0f));
-    blocks[blkidx].push_back(new Block(Point2f(64.0f * blkidx, 64.0f - (4*64.0f)), Vector2f(64.0f, 64.0f), Global::pi*2.0f, 10.0f));
-    
-    
-    
-    
-	d = new Dude(Point2f((get_Window().get_width() / 2) - 32.0f, 0.0f), Vector2f(64.0f, 64.0f), Global::pi*2.0f);
+	d = new Dude(Point2f(0, (get_Window().get_height() / 2) - DUDE_SIZE/2), Vector2f(DUDE_SIZE, DUDE_SIZE), Global::pi*2.0f, GRID_HEIGHT * 1.6f, GRID_WIDTH * 1.1f);
 }
 
 BlockHandler::~BlockHandler(void)
@@ -48,100 +38,271 @@ BlockHandler::~BlockHandler(void)
 	delete d;
 }
 
-void BlockHandler::perform_logic(float time_passed, float time_step, ControlState cs)
+void BlockHandler::perform_logic(float current_time, float time_step, ControlState cs)
 {
-    float curSecs = m_chrono.seconds();
+	if(d->isDead() && state != BH_POST_DEATH)
+	{
+		state = BH_POST_DEATH;
+		readScores();
+		scoresThatIRead.push_back(rs);
+		sort(scoresThatIRead.begin(), scoresThatIRead.end());
+		writeScores();
+	}
+
     switch(state)
     {
         case BH_CLEANUP:
-            if(lastCleanup == 0.0f)
+            if(lastCleanup == UNDEFINED)
             {
-                lastCleanup = m_chrono.seconds();
-                cleanupIndex = 0;
+                lastCleanup = current_time;
+                cleanupIndex = -20;
             }
             
-            if(curSecs-lastCleanup >= 0.156f)
+            if(current_time-lastCleanup >= TIME_TO_WAIT_BETWEEN_CLEANUP_DELETIONS)
             {
-                blocks[cleanupIndex].erase(blocks[cleanupIndex].begin());
-                lastCleanup = m_chrono.seconds();
-                cleanupIndex++;
+                if(cleanupIndex >= 0 && cleanupIndex < blocks.size())
+				{
+                    blocks[cleanupIndex].erase(blocks[cleanupIndex].begin());
+					play_sound("crumble");
+				}
                 
-                if(cleanupIndex >= blocks.size())
-                {
-                    state = BH_NORMAL;
-                    lastCleanup = 0.0f;
-                }
+                cleanupIndex++;
+                lastCleanup = current_time;
             }
+			if(cleanupIndex >= 0 && cleanupIndex >= blocks.size())
+			{
+				state = BH_NORMAL;
+				lastCleanup = UNDEFINED;
+			}
+
         case BH_NORMAL:
-            if(curSecs-lastBlockSpawn >= timeToWait && curSecs != lastBlockSpawn)
+		{
+			rs.setTime(current_time);
+
+            if(current_time-lastBlockSpawn >= timeToWait && current_time != lastBlockSpawn)
             {
-                int speed = (rand() % 10) + 1;
+                float speed = (rand() % MAX_Y_SPEED) + 1;
                 
                 int idx = rand() % GRID_WIDTH;
-                while(blocks[idx].size() >= GRID_HEIGHT - 4) idx = rand() % GRID_WIDTH;
-                    
-                blocks[idx].push_back(new Block(Point2f(64.0f * idx, 0.0f), Vector2f(64.0f, 64.0f), Global::pi*2.0f, (float)speed));
-                
-                timeToWait = (rand() % 5) + 1;
-                lastBlockSpawn = curSecs;
+				if(idx%2 == 0) idx++;
+				if(idx>=GRID_WIDTH) idx-=2;
+                while(blocks[idx].size() >= GRID_HEIGHT - 2) idx = rand() % GRID_WIDTH;
+
+				int type = rand() % 10;
+				BlockType bt = (type <= 2) ? DIRT : TITANIUM;
+
+				//pos, size, theta, y speed, x speed, accel
+                blocks[idx].push_back(new Block(bt, Point2f(GRID_SIZE * idx, 0.0f-GRID_SIZE), Vector2f(GRID_SIZE, GRID_SIZE), Global::pi*2.0f, (float)speed));
+				rs.spawned();
+
+                timeToWait = (rand() % 2) + 1;
+                lastBlockSpawn = current_time;
             }
-            
-            if(state != BH_CLEANUP)
-            {
-                bool itsTime = true;
-                for(int i = 0; i < blocks.size(); i++)
-                {
-                    if(blocks[i].size() < 4)
-                    {
-                        itsTime = false;
-                        break;
-                    }
-                }
-                if(itsTime)
-                    state = BH_CLEANUP;
-            }
-            break;
+
+			//See if its Barney time!
+			BlockHandlerState oldState = state;
+			state = BH_CLEANUP;
+			for(int i = 0; i < blocks.size(); i++)
+			{
+			    if(blocks[i].size() < 2)
+			    {
+			        state = oldState;
+			        break;
+			    }
+			}
+
+			updateBlocks(current_time, time_step);
+
+			// Tell the dude to consider all of the blocks for collision
+			for(unsigned int i = 0; i < blocks.size(); i++)
+				d->colliding(blocks[i], i==0);
+			if(d->perform_logic(current_time, time_step, cs))
+			{
+				state = BH_RESPAWNING_DUDE;
+			}
+			break;
+		}
+		case BH_RESPAWNING_DUDE:
+			if(startedRespawn == UNDEFINED)
+			{
+				startedRespawn = current_time;
+				for(unsigned int i = 1; i < blocks.size(); i++)
+				{
+					if(blocks[i].size() <= blocks[min_index].size()) min_index = i;
+				}
+			}
+			else if(current_time - startedRespawn >= 2.0f)
+			{
+				startedRespawn = UNDEFINED;
+				min_index = 0;
+				d->spawn(Point2f(GRID_SIZE * min_index, 0));
+				state = BH_NORMAL;
+				lastBlockSpawn = current_time;
+			}
+			rs.setTime(current_time);
+			updateBlocks(current_time, time_step);
+			break;
+		case BH_POST_DEATH:
+			if(cs.retry) // Reset everything
+			{
+				for(unsigned int i = 0; i < blocks.size(); i++)
+				{
+					while(!blocks[i].empty())
+					{
+						Block* b = blocks[i].back();
+						blocks[i].pop_back();
+						delete b;
+						lastCleanup = UNDEFINED;
+					}
+				}
+				d->revive();
+
+				timeToWait = INITIAL_TIME_BETWEEN_BLOCKS;
+				lastCleanup = UNDEFINED;
+
+				lastBlockSpawn = UNDEFINED;
+				
+				rs.reset();
+	    
+			    state = BH_NORMAL;
+
+			}
+			else if(cs.main_menu)
+			{
+				get_Game().pop_state();
+			}
+			break;
     }
-    
-    
-    // Loop through each block, and tell it to consider its surrounding blocks for collision
+}
+
+void BlockHandler::render()
+{
+	Zeni::Font &fr = get_Fonts()["clock"];
+	char* message = (char*) malloc(512 * sizeof(char));\
+		
+	switch(state)
+	{
+	case BH_RESPAWNING_DUDE:
+	case BH_CLEANUP:
+	case BH_NORMAL:
+	{   
+		for(unsigned int i = 0; i < blocks.size(); i++)
+		{
+			for(unsigned int j = 0; j < blocks[i].size(); j++)
+				blocks[i][j]->render();
+		}
+		d->render();
+
+		char* scoreText = rs.getName(false);
+		fr.render_text(scoreText, Point2f(10.0f, 00.0f), get_Colors()["black"], ZENI_LEFT);
+		free(scoreText);
+	}
+	break;
+	case BH_POST_DEATH:
+
+		for(unsigned int i = 0; i < blocks.size(); i++)
+		{
+			for(unsigned int j = 0; j < blocks[i].size(); j++)
+				blocks[i][j]->render();
+		}
+		d->render();
+
+		char* scoreText = rs.getName(true);
+		sprintf(message, "GAME OVER\n\n%s\n\n[enter to retry]\n[backspace to quit]", scoreText);
+		fr.render_text(message, Point2f(10.0f, 10.0f), get_Colors()["black"], ZENI_LEFT);
+		free(scoreText);
+
+
+		fr.render_text("HIGH SCORES", Point2f(get_Window().get_width(), 10.0f), get_Colors()["black"], ZENI_RIGHT);
+		char * name;
+		for(unsigned int i = 0; i < scoresThatIRead.size(); i++)
+		{
+			Score s = scoresThatIRead[i];
+			name = s.getName(false);
+			fr.render_text(name, Point2f(get_Window().get_width()-10.0f, 50.0f+(20.0f*i)), get_Colors()[(s.isCur() ? "red" : "black")], ZENI_RIGHT);
+			free(name);
+		}
+
+		break;
+	}
+	free(message);
+}
+
+
+BlockHandlerState BlockHandler::getState()
+{
+	return state;
+}
+
+void BlockHandler::updateBlocks(float current_time, float time_step)
+{			
+	// Loop through each block, and tell it to consider its surrounding blocks for collision
 	for(int i = 0; i < (int) blocks.size(); i++)
 	{
 		for(int j = 0; (int) j < blocks[i].size(); j++)
 		{
 			Block* block = blocks[i][j];
-			vector<GameObject*> potentialCollissions;
-			if(i >= 0 && i < blocks.size() && j+1 >= 0 && j+1 < blocks[i].size()) // Above
-				potentialCollissions.push_back(blocks[i][j+1]);
-			if(i >= 0 && i < blocks.size() && j-1 >=0 && j-1 < blocks[i].size()) // Below
-                potentialCollissions.push_back(blocks[i][j-1]);
-			if(i-1 >= 0 && i-1 < blocks.size() && j >=0 && j < blocks[i-1].size()) // Left
-				potentialCollissions.push_back(blocks[i-1][j]);
-			if(i+1 >= 0 && i+1 < blocks.size() && j >=0 && j < blocks[i+1].size()) // Right
-				potentialCollissions.push_back(blocks[i+1][j]);
-			//potentialCollissions.push_back(d);
-			block->colliding(potentialCollissions, true);
-			block->perform_logic(time_passed, time_step);
+          
+			if(block->isDestroyed())
+			{
+				blocks[i].erase(blocks[i].begin() + j);
+				rs.destroyed();
+				delete block;
+				play_sound("crumble");
+				continue;
+			}
+            
+			block->colliding(blocks[i], true);
+			block->perform_logic(current_time, time_step);
 		}
 	}
-    
-    // Tell the dude to consider all of the blocks for collision
-	for(unsigned int i = 0; i < blocks.size(); i++)
-	{
-		d->colliding(blocks[i], i==0);
-	}
-	d->perform_logic(m_chrono.seconds(), time_passed, time_step, cs);
 }
 
-void BlockHandler::render()
+void BlockHandler::readScores()
 {
-	for(unsigned int i = 0; i < blocks.size(); i++)
+	scoresThatIRead.clear();
+	ifstream infile;
+	infile.open((get_File_Ops().get_appdata_path() + "high_scores.txt").c_str());
+	
+	vector<Score> v;
+	do
 	{
-		for(unsigned int j = 0; j < blocks[i].size(); j++)
-			blocks[i][j]->render();
-	}
-    
-	d->render();
+		Score s;
+		infile >> s;
+		if(s.getTime() > 0) scoresThatIRead.push_back(s);
+	} while(infile.good());
+	infile.close();
+	sort(scoresThatIRead.begin(), scoresThatIRead.end());
 }
 
+void BlockHandler::writeScores()
+{
+	sort(scoresThatIRead.begin(), scoresThatIRead.end());
 
+	ofstream outfile;
+	outfile.open((get_File_Ops().get_appdata_path() + "/high_scores.txt").c_str());
+
+	for(unsigned int i = 0; i < scoresThatIRead.size() && i < 10; i++)
+	{
+		if(scoresThatIRead[i].getTime() > 0.0f) outfile << scoresThatIRead[i];
+	}
+
+	outfile.close();
+}
+
+bool Score::operator< (const Score &other) const
+{
+    return other.time < time;
+}
+
+istream& operator>>(istream &in, Score &s)
+{
+	in >> s.time >> s.numSpawned >> s.numDestroyed;
+	return in;
+}
+
+ostream& operator<<(ostream &out, Score &s)
+{
+	out << s.time << ' ' << s.numSpawned << ' ' << s.numDestroyed << endl;
+	return out;
+}
