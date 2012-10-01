@@ -139,6 +139,7 @@ public:
     Instructions_State()
     : Widget_Gamestate(make_pair(Point2f(0.0f, 0.0f), Point2f(800.0f, 600.0f)))
     {
+		get_Video().set_clear_Color(get_Colors()["green"]);
     }
     
 private:
@@ -166,8 +167,8 @@ private:
                        ZENI_CENTER);*/
 
 		
-		Zeni::Font &fd = get_Fonts()["clock"];
-		fd.render_text("DESTROY BLOCKS AND SURVIVE!\n\n\nControls\n------------\na = move left\nd = move right\nw = jump\nspace = destroy blocks\n\n\n\nSong from user johnfn on newgrounds.com", Point2f(10, 10), get_Colors()["title_text"], ZENI_LEFT);
+		Zeni::Font &fd = get_Fonts()["instr"];
+		fd.render_text("DESTROY BLOCKS AND SURVIVE!\n\n\nControls\n------------\na/left = move left\nd/right = move right\nw/up = jump\nspace = destroy blocks\n\nWhile sliding on a wall, press the jump button to perform a wall jump.\n\nBreaking blocks to gain powerups!\n\n\n\nSong from user johnfn on newgrounds.com", Point2f(10, 10), get_Colors()["title_text"], ZENI_LEFT);
     }
 };
 
