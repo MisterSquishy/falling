@@ -128,7 +128,7 @@ namespace Zeni {
 
     void perform_logic() {
       Widget_Gamestate::perform_logic();
-      get_Video().set_clear_Color(get_Colors()["title_bg"]);
+      get_Video().set_clear_Color(get_Colors()["green"]);
     }
 
   };

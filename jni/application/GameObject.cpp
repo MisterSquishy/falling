@@ -82,7 +82,7 @@ void GameObject::moveSide(float time_step, int dir)
 	}
 }
 
-void GameObject::render(const String &texture, const Color &filter) const {
+void GameObject::render(const String &texture, const bool flip, const Color &filter) const {
     // Use a helper defined in Zeni/EZ2D.h
     render_image(
       texture, // which texture to use
@@ -91,7 +91,7 @@ void GameObject::render(const String &texture, const Color &filter) const {
       m_theta, // rotation in radians
       1.0f, // scaling factor
       m_position + 0.5f * m_size, // point to rotate & scale about
-      false, // whether or not to horizontally flip the texture
+      flip, // whether or not to horizontally flip the texture
       filter); // what Color to "paint" the texture
 }
 

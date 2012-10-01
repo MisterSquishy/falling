@@ -5,16 +5,9 @@ BlockHandler::BlockHandler(void)
 	GRID_HEIGHT = get_Window().get_height() / (int) GRID_SIZE;
 	GRID_WIDTH = (get_Window().get_width() / (int) GRID_SIZE) + 1;
 
-    timeToWait = INITIAL_TIME_BETWEEN_BLOCKS;
-    lastCleanup = UNDEFINED;
-
-	lastBlockSpawn = UNDEFINED;
-	startedRespawn = UNDEFINED;
-	min_index = 0;
-
 	rs.setCur(true);
-    
-    state = BH_NORMAL;
+
+    init();
     
 	for(int i = 0; i < GRID_WIDTH; i++)
     {
@@ -36,6 +29,19 @@ BlockHandler::~BlockHandler(void)
 		}
 	}
 	delete d;
+}
+
+void BlockHandler::init()
+{
+	timeToWait = INITIAL_TIME_BETWEEN_BLOCKS;
+    lastCleanup = UNDEFINED;
+
+	lastBlockSpawn = UNDEFINED;
+	startedRespawn = UNDEFINED;
+	min_index = 0;
+	spawnPerLoop = GRID_WIDTH/5;
+
+    state = BH_NORMAL;
 }
 
 void BlockHandler::perform_logic(float current_time, float time_step, ControlState cs)
@@ -62,8 +68,11 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
             {
                 if(cleanupIndex >= 0 && cleanupIndex < blocks.size())
 				{
-                    blocks[cleanupIndex].erase(blocks[cleanupIndex].begin());
-					play_sound("crumble");
+					if(blocks[cleanupIndex].size())
+					{
+						blocks[cleanupIndex].erase(blocks[cleanupIndex].begin());
+						play_sound("crumble");
+					}
 				}
                 
                 cleanupIndex++;
@@ -81,35 +90,38 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
 
             if(current_time-lastBlockSpawn >= timeToWait && current_time != lastBlockSpawn)
             {
-                float speed = (rand() % MAX_Y_SPEED) + 1;
+				for(int i = 0; i < spawnPerLoop; i++)
+				{
+					float speed = (rand() % MAX_Y_SPEED) + 1;
                 
-                int idx = rand() % GRID_WIDTH;
-				if(idx%2 == 0) idx++;
-				if(idx>=GRID_WIDTH) idx-=2;
-                while(blocks[idx].size() >= GRID_HEIGHT - 2) idx = rand() % GRID_WIDTH;
+					int idx = rand() % GRID_WIDTH;
+					int numChecked = 0;
+					while(blocks[idx].size() >= GRID_HEIGHT - 2 && numChecked++ < blocks.size())
+					{
+						idx = rand() % GRID_WIDTH;
+					}
 
-				int type = rand() % 10;
-				BlockType bt = (type <= 2) ? DIRT : TITANIUM;
+					int type = rand() % 10;
+					BlockType bt = (type <= 2) ? DIRT : TITANIUM;
 
-				//pos, size, theta, y speed, x speed, accel
-                blocks[idx].push_back(new Block(bt, Point2f(GRID_SIZE * idx, 0.0f-GRID_SIZE), Vector2f(GRID_SIZE, GRID_SIZE), Global::pi*2.0f, (float)speed));
-				rs.spawned();
-
-                timeToWait = (rand() % 2) + 1;
+					//pos, size, theta, y speed, x speed, accel
+					blocks[idx].push_back(new Block(bt, Point2f(GRID_SIZE * idx, 0.0f-GRID_SIZE), Vector2f(GRID_SIZE, GRID_SIZE), Global::pi*2.0f, (float)speed));
+					rs.spawned();
+				}
                 lastBlockSpawn = current_time;
+				//timeToWait = max(timeToWait-0.3f, 0.3f);
+				timeToWait = 2.0f;
+				if(rs.getNumSpawned() % 20 == 0) spawnPerLoop = min(spawnPerLoop+1, GRID_WIDTH/2);
             }
 
 			//See if its Barney time!
-			BlockHandlerState oldState = state;
-			state = BH_CLEANUP;
-			for(int i = 0; i < blocks.size(); i++)
+			int numAtMax = 0;
+			for(int i = 0; i < blocks.size()-1; i++)
 			{
-			    if(blocks[i].size() < 2)
-			    {
-			        state = oldState;
-			        break;
-			    }
+			    if(blocks[i].size() >= GRID_HEIGHT - 2)
+			        numAtMax++;
 			}
+			if(numAtMax >= .2*GRID_WIDTH) state = BH_CLEANUP;
 
 			updateBlocks(current_time, time_step);
 
@@ -128,14 +140,15 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
 				startedRespawn = current_time;
 				for(unsigned int i = 1; i < blocks.size(); i++)
 				{
-					if(blocks[i].size() <= blocks[min_index].size()) min_index = i;
+					if(blocks[i].size() <= blocks[min_index].size())
+						min_index = i;
 				}
 			}
-			else if(current_time - startedRespawn >= 2.0f)
+			else if(current_time - startedRespawn >= 3.0f)
 			{
 				startedRespawn = UNDEFINED;
-				min_index = 0;
 				d->spawn(Point2f(GRID_SIZE * min_index, 0));
+				min_index = 0;
 				state = BH_NORMAL;
 				lastBlockSpawn = current_time;
 			}
@@ -157,14 +170,8 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
 				}
 				d->revive();
 
-				timeToWait = INITIAL_TIME_BETWEEN_BLOCKS;
-				lastCleanup = UNDEFINED;
-
-				lastBlockSpawn = UNDEFINED;
-				
+				init();
 				rs.reset();
-	    
-			    state = BH_NORMAL;
 
 			}
 			else if(cs.main_menu)
@@ -194,8 +201,14 @@ void BlockHandler::render()
 		d->render();
 
 		char* scoreText = rs.getName(false);
-		fr.render_text(scoreText, Point2f(10.0f, 00.0f), get_Colors()["black"], ZENI_LEFT);
+		fr.render_text(scoreText, Point2f(10.0f, 00.0f), get_Colors()["white"], ZENI_LEFT);
 		free(scoreText);
+
+		if(state == BH_RESPAWNING_DUDE)
+		{
+			Zeni::Font &fd = get_Fonts()["respawn"];
+			fd.render_text("RESPAWNING THE DUDE...", Point2f(get_Window().get_width()/2, (get_Window().get_height()/2)-fd.get_text_height()/2), get_Colors()["white"], ZENI_CENTER);
+		}
 	}
 	break;
 	case BH_POST_DEATH:
@@ -209,17 +222,17 @@ void BlockHandler::render()
 
 		char* scoreText = rs.getName(true);
 		sprintf(message, "GAME OVER\n\n%s\n\n[enter to retry]\n[backspace to quit]", scoreText);
-		fr.render_text(message, Point2f(10.0f, 10.0f), get_Colors()["black"], ZENI_LEFT);
+		fr.render_text(message, Point2f(10.0f, 10.0f), get_Colors()["white"], ZENI_LEFT);
 		free(scoreText);
 
 
-		fr.render_text("HIGH SCORES", Point2f(get_Window().get_width()-10.0f, 10.0f), get_Colors()["black"], ZENI_RIGHT);
+		fr.render_text("HIGH SCORES", Point2f(get_Window().get_width()-10.0f, 10.0f), get_Colors()["white"], ZENI_RIGHT);
 		char * name;
 		for(unsigned int i = 0; i < scoresThatIRead.size(); i++)
 		{
 			Score s = scoresThatIRead[i];
 			name = s.getName(false);
-			fr.render_text(name, Point2f(get_Window().get_width()-10.0f, 50.0f+(20.0f*i)), get_Colors()[(s.isCur() ? "red" : "black")], ZENI_RIGHT);
+			fr.render_text(name, Point2f(get_Window().get_width()-10.0f, 50.0f+(20.0f*i)), get_Colors()[(s.isCur() ? "red" : "white")], ZENI_RIGHT);
 			free(name);
 		}
 

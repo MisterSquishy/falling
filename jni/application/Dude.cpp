@@ -51,7 +51,16 @@ bool Dude::perform_logic(float current_time, float time_step, ControlState cs)
             break;
         case D_JUMPING:
             m_speed_y -= m_accel_y;
-            if(!collisions[TOP]) m_position.y -= m_speed_y * SCALE * time_step;
+            if(!collisions[TOP])
+			{
+				m_position.y -= m_speed_y * SCALE * time_step;
+				if(m_position.y < GRID_SIZE)
+				{
+					m_position.y = GRID_SIZE;
+					state = D_NORMAL;
+					m_speed_y = DORMANT;
+				}
+			}
             else m_speed_y = DORMANT;
             if(m_speed_y <= DORMANT) state = D_NORMAL;
             break;
@@ -119,21 +128,15 @@ void Dude::render() const
 	{
 	case D_JUMPING:
 	case D_NORMAL:
-		if(collisions[RIGHT] && !collisions[BOTTOM])
-		    GameObject::render("dude_wall_r");
-		else if (collisions[LEFT] && !collisions[BOTTOM])
-		    GameObject::render("dude_wall_l");
+		if((collisions[RIGHT] || collisions[LEFT]) && !collisions[BOTTOM])
+		    GameObject::render("dude_wall", !render_right);
 		else if(!collisions[BOTTOM])
 		{
-		    GameObject::render(render_right ? "dude_air_r" : "dude_air_l");
-		}
-		else if(render_right)
-		{
-		    GameObject::render("dude_r");
+		    GameObject::render("dude_air", !render_right);
 		}
 		else
 		{
-		    GameObject::render("dude_l");
+		    GameObject::render("dude", !render_right);
 		}
 	case D_DEAD:
 		for(int i = 0; i < remainingLives; i++)
@@ -162,7 +165,6 @@ int Dude::right()
 {
     return m_position.x + m_size.x - 17;
 }
-
 
 
 

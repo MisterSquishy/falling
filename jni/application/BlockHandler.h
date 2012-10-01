@@ -43,6 +43,11 @@ public:
 		return curScore;
 	}
 
+	int getNumSpawned()
+	{
+		return numSpawned;
+	}
+
 	
 	void setCur(bool cur_)
 	{
@@ -112,6 +117,8 @@ private:
 	vector<Score> scoresThatIRead;
 
 	void updateBlocks(float current_time, float time_step);
+	int spawnPerLoop;
+	void init();
 };
 
 

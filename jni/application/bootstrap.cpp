@@ -32,10 +32,12 @@ public:
     
     void on_key(const SDL_KeyboardEvent &event) {
         switch(event.keysym.sym) {
-            case SDLK_w:
+        case SDLK_UP:    
+		case SDLK_w:
                 cs.jump = event.type == SDL_KEYDOWN;
                 break;
-                
+            
+			case SDLK_LEFT:
             case SDLK_a:
                 cs.left = event.type == SDL_KEYDOWN;
                 break;
@@ -43,7 +45,8 @@ public:
             case SDLK_SPACE:
                 cs.destroy = event.type == SDL_KEYDOWN;
                 break;
-                
+            
+			case SDLK_RIGHT:
             case SDLK_d:
                 cs.right = event.type == SDL_KEYDOWN;
                 break;
@@ -71,8 +74,6 @@ private:
         //get_Window().mouse_grab(true);
         get_Window().mouse_hide(true);
         //get_Game().joy_mouse.enabled = false;
-        
-        get_Video().set_clear_Color(Color(1.0f, 0.0f, 150.0f, 193.0f));
     }
     
     void on_pop() {
@@ -121,12 +122,14 @@ private:
         get_Video().set_2d();
         //get_Video().set_2d(make_pair(Point2f(0.0f, 0.0f), Point2f(800.0f, 600.0f)), true);
 
-        bh.render();
+		bh.render();
     }
     
     BlockHandler bh;
     ControlState cs;
 };
+
+
 
 class Instructions_State : public Widget_Gamestate {
     Instructions_State(const Instructions_State &);
@@ -168,6 +171,21 @@ private:
     }
 };
 
+class Title_State_Custom : public Title_State<Play_State, Instructions_State> {
+public:
+  Title_State_Custom()
+    : Title_State<Play_State, Instructions_State>("")
+  {
+    m_widgets.unlend_Widget(title);
+  }
+ 
+  void render() {
+    Title_State<Play_State, Instructions_State>::render();
+ 
+    render_image("logo", Point2f(200.0f, 25.0f), Point2f(600.0f, 225.0f));
+  }
+};
+
 class Bootstrap {
     class Gamestate_One_Initializer : public Gamestate_Zero_Initializer {
         virtual Gamestate_Base * operator()() {
@@ -184,7 +202,7 @@ class Bootstrap {
             get_Sound().set_BGM_looping(true);
             get_Sound().play_BGM();
             
-            return new Title_State<Play_State, Instructions_State>("Zenipex Library\nApplication");
+            return new Title_State_Custom();
         }
     } m_goi;
     

@@ -72,38 +72,28 @@ The following things are unsupported:
     <tile>0</tile>
   </titanium_block>
 
-  <dude_r>
-    <filepath>textures/dude_r.png</filepath>
+  <dude>
+    <filepath>textures/dude.png</filepath>
     <tile>0</tile>
-  </dude_r>
+  </dude>
 
-    <dude_l>
-        <filepath>textures/dude_l.png</filepath>
+    <dude_air>
+        <filepath>textures/dude_air.png</filepath>
         <tile>0</tile>
-    </dude_l>
+    </dude_air>
 
-    <dude_air_r>
-        <filepath>textures/dude_air_r.png</filepath>
-        <tile>0</tile>
-    </dude_air_r>
-
-    <dude_air_l>
-        <filepath>textures/dude_air_l.png</filepath>
-        <tile>0</tile>
-    </dude_air_l>
-
-  <dude_wall_r>
-    <filepath>textures/dude_wall_r.png</filepath>
+  <dude_wall>
+    <filepath>textures/dude_wall.png</filepath>
     <tile>0</tile>
-  </dude_wall_r>
-
-  <dude_wall_l>
-    <filepath>textures/dude_wall_l.png</filepath>
-    <tile>0</tile>
-  </dude_wall_l>
+  </dude_wall>
 
   <dude_life_indicator>
     <filepath>textures/dude_life_indicator.png</filepath>
     <tile>0</tile>
   </dude_life_indicator>
+  
+   <logo>
+    <filepath>textures/logo.png</filepath>
+    <tile>0</tile>
+  </logo>
 </Textures>

@@ -110,7 +110,7 @@ protected:
     void moveDown(float time_step);
 	void moveSide(float time_step, int dir);
     
-	void render(const String &texture, const Color &filter = Color()) const;
+	void render(const String &texture, const bool flip = false, const Color &filter = Color()) const;
 	Point2f m_position; // Upper left corner
 	Vector2f m_size; // (width, height)
 	bool collisions[NUM_COLLISSION_SIDES];

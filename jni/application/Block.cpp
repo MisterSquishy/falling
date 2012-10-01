@@ -32,16 +32,12 @@ void Block::perform_logic(float current_time, float time_step)
 	case BL_STARTUP:
 		if(broughtToLife == UNDEFINED)
 			broughtToLife = current_time;
-		else if(current_time-broughtToLife >= BLOCK_PAUSE_BEFORE_FALL)
+		else if(current_time-broughtToLife >= 1.5f)
 			state = BL_NORMAL;
-		else if(current_time-broughtToLife >= BLOCK_PAUSE_BEFORE_FALL/2)
-		{
-			m_position.y += 1;
+		
+		if(m_position.y <= -(GRID_SIZE/2)){
+			m_position.y += 4;
 		}
-		/*else if(current_time-broughtToLife >= BLOCK_PAUSE_BEFORE_FALL/4)
-		{
-			m_position.y += time_step * .02f;
-		}*/
 		break;
 	case BL_NORMAL:
 		bool playSound = m_speed_y != 0;
