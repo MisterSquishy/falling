@@ -40,4 +40,8 @@ HOWTO:  To convert between types, or to downmix to mono,
   <crumble>
     <filepath>sfx/crumble</filepath>
   </crumble>
+
+  <jump>
+    <filepath>sfx/jump</filepath>
+  </jump>
 </Sounds>

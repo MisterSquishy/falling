@@ -38,6 +38,7 @@ bool Dude::perform_logic(float current_time, float time_step, ControlState cs)
                 m_speed_y = JUMP_VERTICAL_SPEED;
                 state = D_JUMPING;
 				safeToWallJump = false;
+				play_sound("jump");
             }
             else if(cs.destroy && (collisions[LEFT] || collisions[RIGHT]) && collisions[BOTTOM])
             {
@@ -77,6 +78,7 @@ bool Dude::perform_logic(float current_time, float time_step, ControlState cs)
 		state = D_JUMPING;
         wallJumpCount++;
 		safeToWallJump = false;
+		play_sound("jump");
     }
     
     if(!collisions[BOTTOM] && !collisions[RIGHT] && !collisions[LEFT])
