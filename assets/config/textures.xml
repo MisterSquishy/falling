@@ -77,6 +77,11 @@ The following things are unsupported:
     <tile>0</tile>
   </dude>
 
+  <dude2>
+    <filepath>textures/dude2.png</filepath>
+    <tile>0</tile>
+  </dude2>
+
     <dude_air>
         <filepath>textures/dude_air.png</filepath>
         <tile>0</tile>
@@ -91,9 +96,24 @@ The following things are unsupported:
     <filepath>textures/dude_life_indicator.png</filepath>
     <tile>0</tile>
   </dude_life_indicator>
-  
+
    <logo>
     <filepath>textures/logo.png</filepath>
     <tile>0</tile>
   </logo>
+
+  <stength_powerup>
+    <filepath>textures/stength_powerup.png</filepath>
+    <tile>0</tile>
+  </stength_powerup>
+
+  <jump_powerup>
+    <filepath>textures/jump_powerup.png</filepath>
+    <tile>0</tile>
+  </jump_powerup>
+
+  <life_powerup>
+    <filepath>textures/life_powerup.png</filepath>
+    <tile>0</tile>
+  </life_powerup>
 </Textures>

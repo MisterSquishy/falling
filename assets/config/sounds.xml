@@ -44,4 +44,12 @@ HOWTO:  To convert between types, or to downmix to mono,
   <jump>
     <filepath>sfx/jump</filepath>
   </jump>
+
+  <power_up_active>
+    <filepath>sfx/power_up_active</filepath>
+  </power_up_active>
+
+  <punch>
+    <filepath>sfx/punch</filepath>
+  </punch>
 </Sounds>

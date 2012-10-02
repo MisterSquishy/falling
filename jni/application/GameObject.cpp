@@ -8,7 +8,7 @@ GameObject::GameObject(const Point2f &position_, const Vector2f &size_, const fl
 		collisions[i] = false;
 	}
 
-	endOfWorldOnRight = get_Window().get_width();
+    endOfWorldOnRight = get_Window().get_width();
 }
  
 GameObject::~GameObject()

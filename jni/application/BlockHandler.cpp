@@ -2,24 +2,45 @@
 
 BlockHandler::BlockHandler(void)
 {
-	GRID_HEIGHT = get_Window().get_height() / (int) GRID_SIZE;
-	GRID_WIDTH = (get_Window().get_width() / (int) GRID_SIZE) + 1;
-
-	rs.setCur(true);
-
+    d = new Dude(Point2f(0, (get_Window().get_height() / 2) - DUDE_SIZE/2), Vector2f(DUDE_SIZE, DUDE_SIZE), Global::pi*2.0f, GRID_HEIGHT * 1.6f, GRID_WIDTH * 1.1f);
     init();
+}
+
+BlockHandler::~BlockHandler(void)
+{
+	emptyBlocks();
+	delete d;
+}
+
+void BlockHandler::init()
+{
+    GRID_HEIGHT = get_Window().get_height() / (int) GRID_SIZE;
+	GRID_WIDTH = (get_Window().get_width() / (int) GRID_SIZE) + 1;
+    
+	timeToWait = INITIAL_TIME_BETWEEN_BLOCKS;
+    lastCleanup = UNDEFINED;
+    
+    d->reset();
+    
+	lastBlockSpawn = UNDEFINED;
+	startedRespawn = UNDEFINED;
+	min_index = 0;
+	spawnPerLoop = GRID_WIDTH/5;
+    
     
 	for(int i = 0; i < GRID_WIDTH; i++)
     {
 		blocks.push_back(vector<Block*>());
     }
     
-	d = new Dude(Point2f(0, (get_Window().get_height() / 2) - DUDE_SIZE/2), Vector2f(DUDE_SIZE, DUDE_SIZE), Global::pi*2.0f, GRID_HEIGHT * 1.6f, GRID_WIDTH * 1.1f);
+    rs.setCur(true);
+    
+    state = BH_NORMAL;
 }
 
-BlockHandler::~BlockHandler(void)
+void BlockHandler::emptyBlocks()
 {
-	for(unsigned int i = 0; i < blocks.size(); i++)
+    for(unsigned int i = 0; i < blocks.size(); i++)
 	{
 		while(!blocks[i].empty())
 		{
@@ -28,20 +49,13 @@ BlockHandler::~BlockHandler(void)
 			delete b;
 		}
 	}
-	delete d;
-}
-
-void BlockHandler::init()
-{
-	timeToWait = INITIAL_TIME_BETWEEN_BLOCKS;
-    lastCleanup = UNDEFINED;
-
-	lastBlockSpawn = UNDEFINED;
-	startedRespawn = UNDEFINED;
-	min_index = 0;
-	spawnPerLoop = GRID_WIDTH/5;
-
-    state = BH_NORMAL;
+    
+    while(!powerups.empty())
+    {
+        Powerup* p = powerups.back();
+        powerups.pop_back();
+        delete p;
+    }
 }
 
 void BlockHandler::perform_logic(float current_time, float time_step, ControlState cs)
@@ -54,21 +68,21 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
 		sort(scoresThatIRead.begin(), scoresThatIRead.end());
 		writeScores();
 	}
-
+    
     switch(state)
     {
         case BH_CLEANUP:
             if(lastCleanup == UNDEFINED)
             {
                 lastCleanup = current_time;
-                cleanupIndex = -20;
+                cleanupIndex = -10;
             }
             
             if(current_time-lastCleanup >= TIME_TO_WAIT_BETWEEN_CLEANUP_DELETIONS)
             {
                 if(cleanupIndex >= 0 && cleanupIndex < blocks.size())
 				{
-					if(blocks[cleanupIndex].size())
+					if(blocks[cleanupIndex].size() && blocks[cleanupIndex][0]->m_speed_y == 0)
 					{
 						blocks[cleanupIndex].erase(blocks[cleanupIndex].begin());
 						play_sound("crumble");
@@ -83,54 +97,56 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
 				state = BH_NORMAL;
 				lastCleanup = UNDEFINED;
 			}
-
+            
         case BH_NORMAL:
 		{
 			rs.setTime(current_time);
-
+            
             if(current_time-lastBlockSpawn >= timeToWait && current_time != lastBlockSpawn)
             {
 				for(int i = 0; i < spawnPerLoop; i++)
 				{
 					float speed = (rand() % MAX_Y_SPEED) + 1;
-                
+                    
 					int idx = rand() % GRID_WIDTH;
-					int numChecked = 0;
+					unsigned int numChecked = 0;
 					while(blocks[idx].size() >= GRID_HEIGHT - 2 && numChecked++ < blocks.size())
 					{
 						idx = rand() % GRID_WIDTH;
 					}
-
-					int type = rand() % 10;
-					BlockType bt = (type <= 2) ? DIRT : TITANIUM;
-
-					//pos, size, theta, y speed, x speed, accel
-					blocks[idx].push_back(new Block(bt, Point2f(GRID_SIZE * idx, 0.0f-GRID_SIZE), Vector2f(GRID_SIZE, GRID_SIZE), Global::pi*2.0f, (float)speed));
+                    
+					if(numChecked <= blocks.size()) blocks[idx].push_back(new Block(Point2f(GRID_SIZE * idx, 0.0f-GRID_SIZE), Vector2f(GRID_SIZE, GRID_SIZE), Global::pi*2.0f, (float)speed));
 					rs.spawned();
 				}
                 lastBlockSpawn = current_time;
-				//timeToWait = max(timeToWait-0.3f, 0.3f);
-				timeToWait = 2.0f;
+				timeToWait = max(timeToWait-0.3f, MIN_TIME_BETWEEN_BLOCKS);
 				if(rs.getNumSpawned() % 20 == 0) spawnPerLoop = min(spawnPerLoop+1, GRID_WIDTH/2);
             }
-
+            
 			//See if its Barney time!
 			int numAtMax = 0;
-			for(int i = 0; i < blocks.size()-1; i++)
+			for(int i = 0; i < blocks.size(); i++)
 			{
 			    if(blocks[i].size() >= GRID_HEIGHT - 2)
 			        numAtMax++;
 			}
 			if(numAtMax >= .2*GRID_WIDTH) state = BH_CLEANUP;
-
+            
 			updateBlocks(current_time, time_step);
-
+            updatePowerups(current_time, time_step);
+            
 			// Tell the dude to consider all of the blocks for collision
 			for(unsigned int i = 0; i < blocks.size(); i++)
 				d->colliding(blocks[i], i==0);
 			if(d->perform_logic(current_time, time_step, cs))
 			{
 				state = BH_RESPAWNING_DUDE;
+                while(!powerups.empty())
+                {
+                    Powerup* p = powerups.back();
+                    powerups.pop_back();
+                    delete p;
+                }
 			}
 			break;
 		}
@@ -138,7 +154,7 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
 			if(startedRespawn == UNDEFINED)
 			{
 				startedRespawn = current_time;
-				for(unsigned int i = 1; i < blocks.size(); i++)
+				for(unsigned int i = 1; i < blocks.size()-1; i++)
 				{
 					if(blocks[i].size() <= blocks[min_index].size())
 						min_index = i;
@@ -158,21 +174,10 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
 		case BH_POST_DEATH:
 			if(cs.retry) // Reset everything
 			{
-				for(unsigned int i = 0; i < blocks.size(); i++)
-				{
-					while(!blocks[i].empty())
-					{
-						Block* b = blocks[i].back();
-						blocks[i].pop_back();
-						delete b;
-						lastCleanup = UNDEFINED;
-					}
-				}
+                emptyBlocks();
+                init();
 				d->revive();
-
-				init();
 				rs.reset();
-
 			}
 			else if(cs.main_menu)
 			{
@@ -186,57 +191,60 @@ void BlockHandler::render()
 {
 	Zeni::Font &fr = get_Fonts()["clock"];
 	char* message = (char*) malloc(512 * sizeof(char));\
-		
+    
 	switch(state)
 	{
-	case BH_RESPAWNING_DUDE:
-	case BH_CLEANUP:
-	case BH_NORMAL:
-	{   
-		for(unsigned int i = 0; i < blocks.size(); i++)
-		{
-			for(unsigned int j = 0; j < blocks[i].size(); j++)
-				blocks[i][j]->render();
-		}
-		d->render();
-
-		char* scoreText = rs.getName(false);
-		fr.render_text(scoreText, Point2f(10.0f, 00.0f), get_Colors()["white"], ZENI_LEFT);
-		free(scoreText);
-
-		if(state == BH_RESPAWNING_DUDE)
-		{
-			Zeni::Font &fd = get_Fonts()["respawn"];
-			fd.render_text("RESPAWNING THE DUDE...", Point2f(get_Window().get_width()/2, (get_Window().get_height()/2)-fd.get_text_height()/2), get_Colors()["white"], ZENI_CENTER);
-		}
-	}
-	break;
-	case BH_POST_DEATH:
-
-		for(unsigned int i = 0; i < blocks.size(); i++)
-		{
-			for(unsigned int j = 0; j < blocks[i].size(); j++)
-				blocks[i][j]->render();
-		}
-		d->render();
-
-		char* scoreText = rs.getName(true);
-		sprintf(message, "GAME OVER\n\n%s\n\n[enter to retry]\n[backspace to quit]", scoreText);
-		fr.render_text(message, Point2f(10.0f, 10.0f), get_Colors()["white"], ZENI_LEFT);
-		free(scoreText);
-
-
-		fr.render_text("HIGH SCORES", Point2f(get_Window().get_width()-10.0f, 10.0f), get_Colors()["white"], ZENI_RIGHT);
-		char * name;
-		for(unsigned int i = 0; i < scoresThatIRead.size(); i++)
-		{
-			Score s = scoresThatIRead[i];
-			name = s.getName(false);
-			fr.render_text(name, Point2f(get_Window().get_width()-10.0f, 50.0f+(20.0f*i)), get_Colors()[(s.isCur() ? "red" : "white")], ZENI_RIGHT);
-			free(name);
-		}
-
-		break;
+        case BH_RESPAWNING_DUDE:
+        case BH_CLEANUP:
+        case BH_NORMAL:
+        {
+            for(unsigned int i = 0; i < blocks.size(); i++)
+            {
+                for(unsigned int j = 0; j < blocks[i].size(); j++)
+                    blocks[i][j]->render();
+            }
+            d->render();
+            for(unsigned int i = 0; i < powerups.size(); i++)
+                powerups[i]->render();
+            
+            
+            char* scoreText = rs.getName(false);
+            fr.render_text(scoreText, Point2f(10.0f, 00.0f), get_Colors()["white"], ZENI_LEFT);
+            free(scoreText);
+            
+            if(state == BH_RESPAWNING_DUDE)
+            {
+                Zeni::Font &fd = get_Fonts()["respawn"];
+                fd.render_text("RESPAWNING THE DUDE...", Point2f(get_Window().get_width()/2, (get_Window().get_height()/2)-fd.get_text_height()/2), get_Colors()["white"], ZENI_CENTER);
+            }
+        }
+            break;
+        case BH_POST_DEATH:
+            
+            for(unsigned int i = 0; i < blocks.size(); i++)
+            {
+                for(unsigned int j = 0; j < blocks[i].size(); j++)
+                    blocks[i][j]->render();
+            }
+            d->render();
+            
+            char* scoreText = rs.getName(true);
+            sprintf(message, "GAME OVER\n\n%s\n\n[enter to retry]\n[backspace to quit]", scoreText);
+            fr.render_text(message, Point2f(10.0f, 10.0f), get_Colors()["white"], ZENI_LEFT);
+            free(scoreText);
+            
+            
+            fr.render_text("HIGH SCORES", Point2f(get_Window().get_width()-10.0f, 10.0f), get_Colors()["white"], ZENI_RIGHT);
+            char * name;
+            for(unsigned int i = 0; i < scoresThatIRead.size(); i++)
+            {
+                Score s = scoresThatIRead[i];
+                name = s.getName(false);
+                fr.render_text(name, Point2f(get_Window().get_width()-10.0f, 50.0f+(20.0f*i)), get_Colors()[(s.isCur() ? "red" : "white")], ZENI_RIGHT);
+                free(name);
+            }
+            
+            break;
 	}
 	free(message);
 }
@@ -248,19 +256,24 @@ BlockHandlerState BlockHandler::getState()
 }
 
 void BlockHandler::updateBlocks(float current_time, float time_step)
-{			
+{
 	// Loop through each block, and tell it to consider its surrounding blocks for collision
 	for(int i = 0; i < (int) blocks.size(); i++)
 	{
 		for(int j = 0; (int) j < blocks[i].size(); j++)
 		{
 			Block* block = blocks[i][j];
-          
-			if(block->isDestroyed())
+            
+            if(block->getState() == BL_DESTROYED)
 			{
 				blocks[i].erase(blocks[i].begin() + j);
 				rs.destroyed();
-				delete block;
+                
+                PowerupType pt = block->getPowerup();
+                if(pt != NO_POWERUP)
+                    powerups.push_back(new Powerup(pt, block->m_position+(block->m_size/4), Point2f(POWERUP_SIZE, POWERUP_SIZE), 0, GRID_HEIGHT*5.0f, DORMANT));
+				
+                delete block;
 				play_sound("crumble");
 				continue;
 			}
@@ -270,6 +283,43 @@ void BlockHandler::updateBlocks(float current_time, float time_step)
 		}
 	}
 }
+
+void BlockHandler::updatePowerups(float current_time, float time_step)
+{
+    for(unsigned int i = 0; i < powerups.size(); i++)
+    {
+        if(powerups[i]->getState() == P_DONE)
+        {
+            Powerup* p = powerups[i];
+            powerups.erase(powerups.begin()+i);
+            delete p;
+        }
+        else
+        {
+            for(unsigned int j = 0; j < blocks.size(); j++)
+            {
+                powerups[i]->colliding_p(blocks[j], j==0);
+            }
+            if(powerups[i]->considerDude(d))
+            {
+                switch(powerups[i]->getType())
+                {
+                    case EXTRA_LIFE:
+                        d->newLife();
+                        break;
+                    case SUPER_STRENGTH:
+                        d->bulkUp();
+                        break;
+                    case SUPER_JUMP:
+                        d->jumpHigher();
+                        break;
+                }
+            }
+            powerups[i]->perform_logic(current_time, time_step);
+        }
+    }
+}
+
 
 void BlockHandler::readScores()
 {
@@ -291,15 +341,15 @@ void BlockHandler::readScores()
 void BlockHandler::writeScores()
 {
 	sort(scoresThatIRead.begin(), scoresThatIRead.end());
-
+    
 	ofstream outfile;
 	outfile.open((get_File_Ops().get_appdata_path() + "/high_scores.txt").c_str());
-
+    
 	for(unsigned int i = 0; i < scoresThatIRead.size() && i < 10; i++)
 	{
 		if(scoresThatIRead[i].getTime() > 0.0f) outfile << scoresThatIRead[i];
 	}
-
+    
 	outfile.close();
 }
 

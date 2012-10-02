@@ -119,12 +119,13 @@ protected:
 	float m_theta;
     float m_accel_y;
 	float m_accel_x;
+    int endOfWorldOnRight;
     vector<GameObject*> wasBelow;
     vector<GameObject*> wasLeft; // currently not used by this implementation in collide, only used by the dude
     vector<GameObject*> wasRight; // currently not used by this implementation in collide, only used by the dude
 private:
 	friend class BlockHandler;
-	int endOfWorldOnRight;
+
 };
 
 #endif

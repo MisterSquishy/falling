@@ -25,6 +25,10 @@ public:
     bool isDead();
     void revive();
 	void spawn(Point2f loc);
+    void reset();
+    void jumpHigher();
+    void bulkUp();
+    void newLife();
     
 protected:
     
@@ -87,9 +91,17 @@ private:
     float lastWallJump;
     bool render_right;
 	bool safeToWallJump;
-    bool dead;
+    float getJumpBoost();
+//    bool dead;
 	int remainingLives;
 	bool okToSpawn;
+    bool superJumpActive;
+    float superJumpActivated;
+    bool strong;
+    float strongActivated;
+    
+    float lastFlip;
+    bool walkFlip;
 };
 
 #endif

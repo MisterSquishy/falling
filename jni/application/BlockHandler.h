@@ -3,6 +3,7 @@
 
 #include "Block.h"
 #include "Dude.h"
+#include "Powerup.h"
 #include <vector>
 #include <fstream>
 
@@ -110,13 +111,19 @@ private:
 
 	float startedRespawn;
 	int min_index;
+    
+    void emptyBlocks();
 
 	void readScores();
 	void writeScores();
 	Score rs;
 	vector<Score> scoresThatIRead;
+    
+    vector<Powerup*> powerups;
 
 	void updateBlocks(float current_time, float time_step);
+    void updatePowerups(float current_time, float time_step);
+
 	int spawnPerLoop;
 	void init();
 };
