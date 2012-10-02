@@ -52,4 +52,12 @@ HOWTO:  To convert between types, or to downmix to mono,
   <punch>
     <filepath>sfx/punch</filepath>
   </punch>
+
+  <power_up_not_active>
+    <filepath>sfx/power_up_not_active</filepath>
+  </power_up_not_active>
+
+  <life>
+    <filepath>sfx/life</filepath>
+  </life>
 </Sounds>

@@ -116,4 +116,25 @@ The following things are unsupported:
     <filepath>textures/life_powerup.png</filepath>
     <tile>0</tile>
   </life_powerup>
+
+  <instr_1>
+    <filepath>textures/instr_1.png</filepath>
+    <tile>0</tile>
+  </instr_1>
+
+  <instr_2>
+    <filepath>textures/instr_2.png</filepath>
+    <tile>0</tile>
+  </instr_2>
+
+  <instr_3>
+    <filepath>textures/instr_3.png</filepath>
+    <tile>0</tile>
+  </instr_3>
+
+  <instr_4>
+    <filepath>textures/instr_4.png</filepath>
+    <tile>0</tile>
+  </instr_4>
 </Textures>
+

@@ -5,7 +5,7 @@ Block::Block(const Point2f &position_, const Vector2f &size_, const float &theta
 GameObject(position_, size_, theta_, speed_y_ /* speed_y */, speed_x_ /*speed_x*/, Y_ACCELERATION /* accel_y */)//, UNDEFINED /* accel_x*/ )
 {
     int tn = rand() % 10;
-    type = (tn <= 2) ? DIRT : TITANIUM;
+    type = (tn <= 3) ? DIRT : TITANIUM;
 	
     state = BL_STARTUP;
 	broughtToLife = UNDEFINED;
@@ -23,10 +23,14 @@ BlockState Block::getState()
 
 PowerupType Block::getPowerup()
 {
-        if((rand()%100) < 10) // 1 in 10 dirt blocks
-            return (PowerupType) (rand() % NUM_POWERUPS);
-        else
-            return NO_POWERUP;
+    bool powerup = false;
+    
+    if(type == TITANIUM)
+        powerup = ((rand()%100) < 10);
+    else if(type == DIRT)
+        powerup = ((rand()%100) < 25);
+        
+    return powerup ? (PowerupType) (rand() % NUM_POWERUPS) : NO_POWERUP;
 }
 
 void Block::destroy(bool dudeIsStrong)

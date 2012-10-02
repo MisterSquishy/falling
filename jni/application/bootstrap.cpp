@@ -32,11 +32,11 @@ public:
     
     void on_key(const SDL_KeyboardEvent &event) {
         switch(event.keysym.sym) {
-        case SDLK_UP:    
-		case SDLK_w:
+            case SDLK_UP:
+            case SDLK_w:
                 cs.jump = event.type == SDL_KEYDOWN;
                 break;
-            
+                
 			case SDLK_LEFT:
             case SDLK_a:
                 cs.left = event.type == SDL_KEYDOWN;
@@ -45,7 +45,7 @@ public:
             case SDLK_SPACE:
                 cs.destroy = event.type == SDL_KEYDOWN;
                 break;
-            
+                
 			case SDLK_RIGHT:
             case SDLK_d:
                 cs.right = event.type == SDL_KEYDOWN;
@@ -54,11 +54,11 @@ public:
 			case SDLK_RETURN:
 				cs.retry = event.type == SDL_KEYDOWN;
 				break;
-
+                
 			case SDLK_BACKSPACE:
 				cs.main_menu = event.type == SDL_KEYDOWN;
 				break;
-
+                
             default:
                 Gamestate_Base::on_key(event); // Let Gamestate_Base handle it
                 break;
@@ -88,19 +88,19 @@ private:
     float m_time_passed;
     
 	
-
+    
     void perform_logic() {
         //time_t now = time(0);
         //float time_step = now - m_time;
         //time_step /= 100;
         //m_time = now;
-       
+        
 		static float time_processed = 0.00f;
         
 		const float time_passed = m_chrono.seconds();
         const float time_step = time_passed - m_time_passed;
         m_time_passed = time_passed;
-
+        
 		if(time_processed >= FRAME_RATE)
 		{
 			time_processed = 0.0f;
@@ -110,7 +110,7 @@ private:
 		{
 			time_processed += time_step;
 		}
-
+        
 		if(bh.getState() == BH_POST_DEATH)
 		{
 			m_chrono.reset();
@@ -121,7 +121,7 @@ private:
     void render() {
         get_Video().set_2d();
         //get_Video().set_2d(make_pair(Point2f(0.0f, 0.0f), Point2f(800.0f, 600.0f)), true);
-
+        
 		bh.render();
     }
     
@@ -139,52 +139,109 @@ public:
     Instructions_State()
     : Widget_Gamestate(make_pair(Point2f(0.0f, 0.0f), Point2f(800.0f, 600.0f)))
     {
+        instridx = 0;
 		get_Video().set_clear_Color(get_Colors()["green"]);
+        m_chrono.start();
     }
     
 private:
+    int instridx;
+    float lastTime;
+    Chronometer<Time> m_chrono;
+    
     void on_key(const SDL_KeyboardEvent &event) {
-        if(event.keysym.sym == SDLK_ESCAPE && event.state == SDL_PRESSED)
-            get_Game().pop_state();
+        
+        if(event.type == SDL_KEYDOWN)
+        {
+            
+            switch(event.keysym.sym) {
+                case SDLK_LEFT:
+                    if(m_chrono.seconds()-lastTime >= .5f)
+                    {
+                        instridx = max(instridx-1, 0);
+                        lastTime = m_chrono.seconds();
+                    }
+                    
+                    break;
+                    
+                case SDLK_RIGHT:
+                    if(m_chrono.seconds()-lastTime >= .5f)
+                    {
+                        instridx = min(instridx+1, 3);
+                        lastTime = m_chrono.seconds();
+                    }
+                    break;
+                    
+                case SDLK_BACKSPACE:
+                    if(m_chrono.seconds()-lastTime >= .5f)
+                    {
+                        get_Game().pop_state();
+                        lastTime = m_chrono.seconds();
+                    }
+                    break;
+                    
+                default:
+                    Gamestate_Base::on_key(event); // Let Gamestate_Base handle it
+                    break;
+            }
+        } else Gamestate_Base::on_key(event); // Let Gamestate_Base handle it
     }
     
     void render() {
         Widget_Gamestate::render();
         
-        /*Zeni::Font &fr = get_Fonts()["title"];
+        Point2f one = Point2f(0,0);
+        Point2f two = one + Point2f(1024,1024);
         
-        fr.render_text(
-#if defined(_WINDOWS)
-                       "ALT+F4"
-#elif defined(_MACOSX)
-                       "Apple+Q"
-#else
-                       "Ctrl+Q"
-#endif
-                       " to Quit",
-                       Point2f(400.0f, 300.0f - 0.5f * fr.get_text_height()),
-                       get_Colors()["title_text"],
-                       ZENI_CENTER);*/
-
-		
-		Zeni::Font &fd = get_Fonts()["instr"];
-		fd.render_text("DESTROY BLOCKS AND SURVIVE!\n\n\nControls\n------------\na/left = move left\nd/right = move right\nw/up = jump\nspace = destroy blocks\n\nWhile sliding on a wall, press the jump button to perform a wall jump.\n\nBreaking blocks to gain powerups!\n\n\n\nSong from user johnfn on newgrounds.com", Point2f(10, 10), get_Colors()["title_text"], ZENI_LEFT);
+        /*Zeni::Font &fr = get_Fonts()["title"];
+         
+         fr.render_text(
+         #if defined(_WINDOWS)
+         "ALT+F4"
+         #elif defined(_MACOSX)
+         "Apple+Q"
+         #else
+         "Ctrl+Q"
+         #endif
+         " to Quit",
+         Point2f(400.0f, 300.0f - 0.5f * fr.get_text_height()),
+         get_Colors()["title_text"],
+         ZENI_CENTER);*/
+        
+        switch(instridx)
+        {
+            case 0:
+                render_image("instr_1", one, two);
+                break;
+            case 1:
+                render_image("instr_2", one, two);
+                break;
+            case 2:
+                render_image("instr_3", one, two);
+                break;
+            case 3:
+                render_image("instr_4", one, two);
+                break;
+        }
+        
+        //Zeni::Font &fd = get_Fonts()["instr"];
+        //fd.render_text("DESTROY BLOCKS AND SURVIVE!\n\n\nControls\n------------\na/left = move left\nd/right = move right\nw/up = jump\nspace = destroy blocks\n\nWhile sliding on a wall, press the jump button to perform a wall jump.\n\nBreaking blocks to gain powerups!\n\n\n\nSong from user johnfn on newgrounds.com", Point2f(10, 10), get_Colors()["title_text"], ZENI_LEFT);
     }
 };
 
 class Title_State_Custom : public Title_State<Play_State, Instructions_State> {
 public:
-  Title_State_Custom()
+    Title_State_Custom()
     : Title_State<Play_State, Instructions_State>("")
-  {
-    m_widgets.unlend_Widget(title);
-  }
- 
-  void render() {
-    Title_State<Play_State, Instructions_State>::render();
- 
-    render_image("logo", Point2f(200.0f, 25.0f), Point2f(600.0f, 225.0f));
-  }
+    {
+        m_widgets.unlend_Widget(title);
+    }
+    
+    void render() {
+        Title_State<Play_State, Instructions_State>::render();
+        
+        render_image("logo", Point2f(200.0f, 25.0f), Point2f(600.0f, 225.0f));
+    }
 };
 
 class Bootstrap {

@@ -25,6 +25,8 @@ void Dude::reset()
     render_right = true;
 	safeToWallJump = true;
     
+    safeToDestroy = true;
+    
     endOfWorldOnRight = get_Window().get_width();
 }
 
@@ -122,14 +124,20 @@ bool Dude::perform_logic(float current_time, float time_step, ControlState cs)
 				safeToWallJump = false;
 				play_sound("jump");
             }
-            else if(cs.destroy && (collisions[LEFT] || collisions[RIGHT]) && collisions[BOTTOM])
+            else if(cs.destroy && collisions[BOTTOM])
             {
+                if(safeToDestroy)
+                {
+                    play_sound("punch");
+                    safeToDestroy = false;
+                }
                 if(collisions[LEFT])
                     for(int i = 0; i < wasLeft.size(); i++)
                         ((Block*) wasLeft[i])->destroy(strong);
                 else if(collisions[RIGHT])
                     for(int i = 0; i < wasRight.size(); i++)
                         ((Block*) wasRight[i])->destroy(strong);
+                safeToDestroy = false;
             }
             break;
         case D_JUMPING:
@@ -152,6 +160,7 @@ bool Dude::perform_logic(float current_time, float time_step, ControlState cs)
 	}
     
 	if(!safeToWallJump && !cs.jump) safeToWallJump = true;
+    if(!safeToDestroy && !cs.destroy) safeToDestroy = true;
     
 	// Wall Jump
     if(safeToWallJump && !collisions[BOTTOM] && (collisions[RIGHT] || collisions[LEFT]) && cs.jump && wallJumpCount < 5 && current_time-lastWallJump >= 0.20f)

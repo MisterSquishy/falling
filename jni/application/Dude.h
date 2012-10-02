@@ -92,7 +92,6 @@ private:
     bool render_right;
 	bool safeToWallJump;
     float getJumpBoost();
-//    bool dead;
 	int remainingLives;
 	bool okToSpawn;
     bool superJumpActive;
@@ -102,6 +101,7 @@ private:
     
     float lastFlip;
     bool walkFlip;
+    bool safeToDestroy;
 };
 
 #endif

@@ -85,7 +85,7 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
 					if(blocks[cleanupIndex].size() && blocks[cleanupIndex][0]->m_speed_y == 0)
 					{
 						blocks[cleanupIndex].erase(blocks[cleanupIndex].begin());
-						play_sound("crumble");
+						if(cleanupIndex%3==0) play_sound("crumble");
 					}
 				}
                 
@@ -233,8 +233,9 @@ void BlockHandler::render()
             fr.render_text(message, Point2f(10.0f, 10.0f), get_Colors()["white"], ZENI_LEFT);
             free(scoreText);
             
-            
-            fr.render_text("HIGH SCORES", Point2f(get_Window().get_width()-10.0f, 10.0f), get_Colors()["white"], ZENI_RIGHT);
+            char highheader[512] = "";
+            sprintf(&highheader[0], "HIGH SCORES: %d tall, %d wide", GRID_HEIGHT, GRID_WIDTH);
+            fr.render_text(highheader, Point2f(get_Window().get_width()-10.0f, 10.0f), get_Colors()["white"], ZENI_RIGHT);
             char * name;
             for(unsigned int i = 0; i < scoresThatIRead.size(); i++)
             {
@@ -324,8 +325,12 @@ void BlockHandler::updatePowerups(float current_time, float time_step)
 void BlockHandler::readScores()
 {
 	scoresThatIRead.clear();
-	ifstream infile;
-	infile.open((get_File_Ops().get_appdata_path() + "high_scores.txt").c_str());
+
+	char filename[256] = "";
+    sprintf(&filename[0], "%s/high_scores_%d_%d.txt", get_File_Ops().get_appdata_path().c_str(), GRID_HEIGHT, GRID_WIDTH);
+    
+    ifstream infile;
+	infile.open(filename);
 	
 	vector<Score> v;
 	do
@@ -342,8 +347,11 @@ void BlockHandler::writeScores()
 {
 	sort(scoresThatIRead.begin(), scoresThatIRead.end());
     
+    char filename[512] = "";
+    sprintf(&filename[0], "%s/high_scores_%d_%d.txt", get_File_Ops().get_appdata_path().c_str(), GRID_HEIGHT, GRID_WIDTH);
+    
 	ofstream outfile;
-	outfile.open((get_File_Ops().get_appdata_path() + "/high_scores.txt").c_str());
+	outfile.open(filename);
     
 	for(unsigned int i = 0; i < scoresThatIRead.size() && i < 10; i++)
 	{

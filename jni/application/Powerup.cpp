@@ -47,15 +47,22 @@ void Powerup::perform_logic(float current_time, float time_step)
             switch(type)
         {
             case SUPER_JUMP:
-            if(current_time-activated >= SUPER_JUMP_ACTIVE_TIME)
-                state = P_DONE;
+                if(current_time-activated >= SUPER_JUMP_ACTIVE_TIME)
+                {
+                    state = P_DONE;
+                    play_sound("power_up_not_active");
+                }
             break;
             case EXTRA_LIFE:
+                play_sound("life");
                 state = P_DONE;
                 break;
             case SUPER_STRENGTH:
                 if(current_time-activated >= SUPER_STRENGTH_ACTIVE_TIME)
+                {
                     state = P_DONE;
+                    play_sound("power_up_not_active");
+                }
                 break;
         }
             break;
