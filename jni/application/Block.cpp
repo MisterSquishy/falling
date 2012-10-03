@@ -40,7 +40,7 @@ void Block::destroy(bool dudeIsStrong)
 }
 
 void Block::perform_logic(float current_time, float time_step)
-{
+{aw
     switch(state)
     {
         case BL_STARTUP:

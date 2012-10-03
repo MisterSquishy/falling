@@ -75,7 +75,7 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
             if(lastCleanup == UNDEFINED)
             {
                 lastCleanup = current_time;
-                cleanupIndex = -10;
+                cleanupIndex = 0;
             }
             
             if(current_time-lastCleanup >= TIME_TO_WAIT_BETWEEN_CLEANUP_DELETIONS)
@@ -154,7 +154,8 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
 			if(startedRespawn == UNDEFINED)
 			{
 				startedRespawn = current_time;
-				for(unsigned int i = 1; i < blocks.size()-2; i++)
+				min_index = 0;
+				for(unsigned int i = 1; i < blocks.size()-1; i++)
 				{
 					if(blocks[i].size() <= blocks[min_index].size())
 						min_index = i;
@@ -163,7 +164,7 @@ void BlockHandler::perform_logic(float current_time, float time_step, ControlSta
 			else if(current_time - startedRespawn >= 3.0f)
 			{
 				startedRespawn = UNDEFINED;
-				d->spawn(Point2f(GRID_SIZE * min_index, 0));
+				d->spawn(Point2f(GRID_SIZE * min_index, GRID_SIZE));
 				min_index = 0;
 				state = BH_NORMAL;
 				lastBlockSpawn = current_time;

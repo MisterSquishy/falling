@@ -36,6 +36,8 @@ void Dude::spawn(Point2f loc)
 	m_position = loc;
 	m_speed_x = 0.0f;
 	m_speed_y = 0.0f;
+
+	if(m_position.x >= get_Window().get_width()) m_position.x = 0;
     
     superJumpActive = false;
     superJumpActivated = UNDEFINED;
