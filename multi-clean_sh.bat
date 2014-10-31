@@ -1,7 +1,7 @@
 #!/bin/bash
 
 @echo off
-GOTO WINDOWS 
+GOTO WINDOWS
 
 
 
@@ -146,7 +146,7 @@ exit
 
 
 
-:WINDOWS 
+:WINDOWS
 
 
 
@@ -157,8 +157,8 @@ SET DIR=build
 SET MACOSX=native
 
 SET STATE=config
-:NEXTARG 
-IF "%1" == "" GOTO DONEARGS 
+:NEXTARG
+IF "%1" == "" GOTO DONEARGS
 
 IF "%STATE%"=="build" (
   IF "%1"=="all" (
@@ -168,7 +168,7 @@ IF "%STATE%"=="build" (
   ) ELSE (
     ECHO(
     ECHO Error: Invalid Argument '%1'
-    GOTO ARGERROR 
+    GOTO ARGERROR
   ))
   SET STATE=config
 ) ELSE ( IF "%STATE%"=="config" (
@@ -193,7 +193,7 @@ IF "%STATE%"=="build" (
   ) ELSE (
     ECHO(
     ECHO Error: Invalid Argument '%1'
-    GOTO ARGERROR 
+    GOTO ARGERROR
   )))))))))
 ) ELSE ( IF "%STATE%"=="dir" (
   SET DIR=%1
@@ -210,19 +210,19 @@ IF "%STATE%"=="build" (
   ) ELSE (
     ECHO(
     ECHO Error: Invalid Argument '%1'
-    GOTO ARGERROR 
+    GOTO ARGERROR
   ))))
   SET STATE=config
 ) ELSE (
   ECHO(
   ECHO Error: Invalid Argument '%1'
-  GOTO ARGERROR 
+  GOTO ARGERROR
 ))))
 
 SHIFT
-GOTO NEXTARG 
+GOTO NEXTARG
 
-:ARGERROR 
+:ARGERROR
 
 ECHO(
 ECHO Usage: multi-build_sh.bat [options]
@@ -232,12 +232,12 @@ ECHO           mine      game only (default)
 
 EXIT /B 1
 
-:DONEARGS 
+:DONEARGS
 
 IF NOT "%STATE%"=="config" (
   ECHO(
   ECHO Error: Trailing Argument
-  GOTO ARGERROR 
+  GOTO ARGERROR
 )
 
 

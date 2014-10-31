@@ -44,3 +44,5 @@
 !/jni/external/lib/*/*.lib
 !/jni/external/libvorbis/macos/*.exp
 !/jni/external/sdl/src/hermes/COPYING.LIB
+
+dev/premake/premake4-macosx
